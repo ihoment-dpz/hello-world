@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #map {
+            width: 600px;
+            height: 600px;
+            position: relative;
+            background: #ccc;
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+
+</html>
+<script>
+    function Food(width, height, x, y, background) {
+        this.width = width || 20;
+        this.height = height || 20;
+        this.x = x || 0;
+        this.y = y || 0;
+        this.background = background || "green";
+    }
+    var newFood = null;
+    Food.prototype.createFood = function(map) {
+        this.removeFood(map);
+        newFood = document.createElement("div");
+        newFood.style.width = this.width + "px";
+        newFood.style.height = this.height + "px";
+        newFood.style.background = this.background;
+        this.x = parseInt(Math.random() * (map.offsetWidth - this.width) / this.width) * this.width;
+        this.y = parseInt(Math.random() * (map.offsetHeight - this.height) / this.height) * this.height;
+        newFood.style.position = "absolute";
+        newFood.style.left = this.x + "px";
+        newFood.style.top = this.y + "px";
+        map.appendChild(newFood);
+    }
+    Food.prototype.removeFood = function() {
+        if(newFood) {
+            map.removeChild(newFood);
+        }
+    }
+
+
+    function Snake(width, height, direction) {
+        this.width = width || 20;
+        this.height = height || 20;
+        this.direction = direction || "right";
+        this.body = [{
+            x: 3,
+            y: 1,
+            background: "red"
+        }, {
+            x: 2,
+            y: 1,
+            background: "gold"
+        }, {
+            x: 1,
+            y: 1,
+            background: "gold"
+        }]
+    }
+    var newSnake = [];
+    Snake.prototype.createSnake = function(map) {
+        for (var i = 0; i < this.body.length; i++) {
+            var snake = document.createElement("div");
+            snake.style.width = this.width + "px";
+            snake.style.height = this.height + "px";
+            snake.style.position = "absolute";
+            snake.style.left = this.body[i].x * this.width + "px";
+            snake.style.top = this.body[i].y * this.height + "px";
+            snake.style.background = this.body[i].background;
+            map.appendChild(snake);
+            newSnake.push(snake);
+        }
+
+    }
+    Snake.prototype.move = function(map, food) {
+        this.removeSnake(map);
+        for (var i = this.body.length - 1; i >= 1; i--) {
+            this.body[i].x = this.body[i - 1].x;
+            this.body[i].y = this.body[i - 1].y;
+        }
+        switch (this.direction) {
+            case "right":
+                this.body[0].x += 1;
+                break;
+            case "left":
+                this.body[0].x -= 1;
+                break;
+            case "top":
+                this.body[0].y -= 1;
+                break;
+            case "bottom":
+                this.body[0].y += 1;
+        }
+        var last = this.body[this.body.length - 1];
+        var x = this.body[0].x * this.width;
+        var y = this.body[0].y * this.height;
+        console.log(food);
+        if(x == food.x && y == food.y) {
+            food.createFood(map);
+            var s = {
+                x: last.x,
+                y: last.y,
+                background: "gold"
+            }
+            this.body.push(s);
+        }
+        this.createSnake(map);
+    }
+    Snake.prototype.removeSnake = function(map) {
+        for (var i = 0; i < newSnake.length;) {
+            map.removeChild(newSnake[i]);
+            newSnake.shift();
+        }
+    }
+
+
+    function Game(map) {
+        this.food = new Food();
+        this.snake = new Snake();
+        this.map = map;
+    }
+    Game.prototype.init = function() {
+        this.snake.createSnake(this.map);
+        this.food.createFood(this.map);
+        this.snakeMove(this.map);
+        this.changeDire(this.snake);
+    }
+    Game.prototype.snakeMove = function() {
+        var self = this;
+        var timer = setInterval(function() {
+            self.snake.move(self.map, self.food);
+            var x = self.map.offsetWidth / self.snake.width - 1;
+            var y = self.map.offsetHeight / self.snake.height - 1;
+            console.log(x,y);
+            if(self.snake.body[0].x < 0 || self.snake.body[0].x > x || self.snake.body[0].y < 0 || self.snake.body[0].y > y) {
+                clearInterval(timer);
+                alert("Game over");
+            }
+        }, 600 / self.snake.body.length)
+    }
+    Game.prototype.changeDire = function(snake) {
+        document.onkeydown = function(e) {
+            switch (e.keyCode) {
+                case 37:
+                    snake.direction = "left";
+                    break;
+                case 38:
+                    snake.direction = "top";
+                    break;
+                case 39:
+                    snake.direction = "right";
+                    break;
+                case 40:
+                    snake.direction = "bottom";
+                    break;
+            }
+        }
+    }
+
+
+    var map = document.getElementById("map");
+    var game = new Game(map);
+    game.init();
+</script>
